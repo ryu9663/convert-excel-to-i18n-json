@@ -1,7 +1,9 @@
 # Convert Excel to i18n JSON
 
-excel을 업로드해서 i18n에 필요한 json으로 변환하는 서비스
-https://ryu9663.github.io/excel-to-json/
+excel을 업로드해서 i18n에 필요한 json으로 변환하는 서비스  
+
+  
+https://ryu9663.github.io/convert-excel-to-i18n-json/
 
 
 
