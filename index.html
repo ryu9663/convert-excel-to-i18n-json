@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel to i18n JSON</title>
+    <style>
+      body {
+        margin-top: 50px;
+        width: 100%;
+        height: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+      }
+      #output {
+        margin-top: 20px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .imgs {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      footer {
+        position: fixed;
+        bottom: 5px;
+        display: flex;
+        gap: 10px;
+
+        span::after {
+          content: "|";
+          margin-left: 10px;
+        }
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      button {
+        width: 300px;
+        cursor: pointer;
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Covert Excel to JSON suitable for i18n</h1>
+      <h2>
+        When you upload an Excel file, a JSON suitable for i18n will be
+        downloaded.
+      </h2>
+      <div class=".imgs">
+        <img src="./images/excel.webp" alt="excel" width="1200" />
+        <p>
+          The first row of the Excel file becomes the header. Each column will
+          be used as the filename, creating JSON files like the ones shown
+          below.
+        </p>
+        <img src="./images/json.webp" alt="excel" width="1200" />
+      </div>
+
+      <hr />
+      <h2>Upload Excel and Download JSON for i18n</h2>
+      <form id="uploadForm">
+        <button type="button" id="uploadButton">Upload</button>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" />
+
+        <span class="filename" id="fileName"></span>
+
+        <button type="submit">Conver to JSON</button>
+      </form>
+    </main>
+
+    <footer>
+      <span>© 2024 by ryu9663@naver.com All rights reserved. </span>
+      <span>ryu9663@naver.com</span>
+    </footer>
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script>
+    document
+      .getElementById("uploadButton")
+      .addEventListener("click", function () {
+        document.getElementById("fileInput").click();
+      });
+    document
+      .getElementById("fileInput")
+      .addEventListener("change", function () {
+        const fileInput = document.getElementById("fileInput");
+        const fileNameSpan = document.getElementById("fileName");
+        if (fileInput.files.length > 0) {
+          fileNameSpan.textContent = fileInput.files[0].name;
+        } else {
+          fileNameSpan.textContent = "";
+        }
+      });
+    document
+      .getElementById("uploadForm")
+      .addEventListener("submit", function (event) {
+        event.preventDefault();
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            const headers = json[0].slice(1); // First row, skip the first column
+            const keys = json.slice(1).map((row) => row[0]); // First column from second row
+            const translations = headers.map((header, index) => {
+              const obj = {};
+              json.slice(1).forEach((row) => {
+                obj[row[0]] = row[index + 1];
+              });
+              return { header, data: obj };
+            });
+
+            translations.forEach(({ header, data }) => {
+              const blob = new Blob([JSON.stringify(data, null, 2)], {
+                type: "application/json",
+              });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              console.log(header);
+              a.download = `${header}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            });
+          };
+          reader.readAsArrayBuffer(file);
+        }
+      });
+  </script>
+</html>
